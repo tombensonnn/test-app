@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
 
 const dotenv = require("dotenv");
 
@@ -37,8 +38,14 @@ const User = sequelize.define("User", {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
   },
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+  },
+  resetPasswordExpire: {
+    type: DataTypes.DATE,
+  }
 });
 
 User.prototype.generateJwtFromUser = function () {
@@ -54,6 +61,20 @@ User.prototype.generateJwtFromUser = function () {
   });
 
   return token;
+};
+
+User.prototype.getResetPasswordToken = function () {
+  const randomHexString = crypto.randomBytes(15).toString("hex");
+
+  const resetPasswordToken = crypto
+    .createHash("SHA256")
+    .update(randomHexString)
+    .digest("hex");
+
+  this.resetPasswordToken = resetPasswordToken;
+  this.resetPasswordExpire = Date.now() + parseInt(process.env.RESET_PASSWORD_EXPIRE);
+
+  return resetPasswordToken;
 };
 
 module.exports = User;

@@ -20,11 +20,7 @@ const sendJwtToClient = (user, res) => {
     })
     .json({
         success: true,
-        access_token: token,
-        data: {
-            name: user.firstName + " " + user.lastName,
-            email: user.email
-        }
+        access_token: token
     });
 
 
@@ -34,6 +30,7 @@ const sendJwtToClient = (user, res) => {
 
 const isTokenIncluded = (req) => {
     return req.headers.authorization && req.headers.authorization.startsWith("Bearer: ")
+    // console.log(req.headers.authorization);
 }
 
 

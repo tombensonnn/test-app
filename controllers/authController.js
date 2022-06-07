@@ -37,33 +37,58 @@ exports.createUser = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
 
-    const {email, password} = req.body;
-
+    const email = req.body.email;
+    const password = req.body.password;
+    // console.log(email);
     if (!validateUserInput(email, password)){
       return next(new CustomError("Please check your inputs", 400));
     }
 
-    const user = await User.findOne({email});
+    const user = await User.findOne({where: {
+      email: email
+    }});
 
-    console.log(user.password);
+    // console.log(user);
 
-    if (!comparePassword(password, user.password)){
+    if (!user || !comparePassword(password, user.password)){
       return next(new CustomError("Please check your credentials", 400));
     }
 
     await sendJwtToClient(user, res);
+
+    res.status(200).json({
+      success: true,
+      user: user.firstName + " " + user.lastName
+    });
 
   } catch (error) {
     console.log(error);
   }
 };
 
-exports.getUser = (req, res, next) => {
-  res.json({
-    success: true,
-    message: {
-      id: req.user.id,
-      name: req.user.name,
-    },
-  });
-};
+exports.logout = async(req, res, next) => {
+  
+  const {JWT_COOKIE_EXPIRE, NODE_ENV} = process.env;
+
+  return res
+    .status(200)
+    .cookie("access_token",null, {
+        httpOnly : true,
+        expires : new Date(Date.now()),
+        secure : NODE_ENV === "development" ? false : true
+    })
+    .json({
+        success : true,
+        message : "Logout Successfull"
+    });
+}
+
+exports.getUserLoggedIn = async(req, res, next) => {
+
+  res
+  .json({
+    status: true,
+    user: req.user
+  }); 
+
+}
