@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 const dotenv = require("dotenv");
 
@@ -66,15 +67,47 @@ User.prototype.generateJwtFromUser = function () {
 User.prototype.getResetPasswordToken = function () {
   const randomHexString = crypto.randomBytes(15).toString("hex");
 
+
+
+  // console.log(randomHexString);
+
   const resetPasswordToken = crypto
     .createHash("SHA256")
     .update(randomHexString)
     .digest("hex");
+
+    console.log(resetPasswordToken);
 
   this.resetPasswordToken = resetPasswordToken;
   this.resetPasswordExpire = Date.now() + parseInt(process.env.RESET_PASSWORD_EXPIRE);
 
   return resetPasswordToken;
 };
+
+// User.beforeCreate(function () {
+//   bcrypt.genSalt(10, (salt) => {
+//     // if (err) next(err);
+//     bcrypt.hash(this.password, salt, (hash) => {
+//         // if (err) next(err);
+//         this.password = hash;
+//         // next();
+//     });
+// });
+// });
+
+User.beforeSave((user) =>  {
+
+  // if(!user.changed("password")){
+    
+  // }
+
+  if (user) {
+    const salt = bcrypt.genSaltSync();
+    const hash = bcrypt.hashSync(user.getDataValue('password'), salt);
+
+   // user.password = hash; Not working
+    user.setDataValue('password', hash); // use this instead
+  }
+})
 
 module.exports = User;
